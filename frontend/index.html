@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shorui</title>
+    <meta name="author" content="ferdyhape" />
+    <script>
+      // Apply the stored theme before React mounts so there is no flash of the wrong theme.
+      // Same key as components/navigation/ThemeToggle.tsx. No stored choice = follow the OS.
+      ;(function () {
+        try {
+          var v = localStorage.getItem('shorui:theme')
+          if (v === 'light' || v === 'dark') document.documentElement.setAttribute('data-theme', v)
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

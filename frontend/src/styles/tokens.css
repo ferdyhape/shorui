@@ -1,0 +1,445 @@
+/*
+ * Design tokens — mirrored from Kagami (web/frontend-v1/src/index.css) so Shorui looks and
+ * themes identically. Tailwind v4 @theme: every token below becomes a utility (bg-brand,
+ * text-ink-muted, rounded-lg, text-h2, shadow-md ...). Change values here, never inline.
+ * Dark mode: OS preference by default; html[data-theme="light"|"dark"] overrides it.
+ */
+@theme {
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Brand (indigo) */
+  --color-brand-50: #f2f4fc;
+  --color-brand-100: #e5e9f8;
+  --color-brand-200: #ccd3f1;
+  --color-brand-300: #a7b2e5;
+  --color-brand-400: #7d8ad5;
+  --color-brand-500: #5a66c4;
+  --color-brand: #3d49bd;
+  --color-brand-600: #3d49bd;
+  --color-brand-hover: #313a99;
+  --color-brand-700: #313a99;
+  --color-brand-active: #282f78;
+  --color-brand-800: #282f78;
+  --color-brand-900: #1d2255;
+
+  /* Neutrals (cool gray) */
+  --color-gray-0: #ffffff;
+  --color-gray-25: #fcfcfd;
+  --color-gray-50: #f8f9fb;
+  --color-gray-100: #f1f3f6;
+  --color-gray-200: #e4e7ec;
+  --color-gray-300: #d1d6de;
+  --color-gray-400: #a2aab8;
+  --color-gray-500: #737d8c;
+  --color-gray-600: #545c69;
+  --color-gray-700: #3d434e;
+  --color-gray-800: #272b33;
+  --color-gray-900: #16181d;
+
+  /* Status scales — the design's own muted green/red/amber, overriding Tailwind's
+     default (much more saturated) palettes so `bg-red-500` can't silently pull in
+     an off-system red. The semantic status aliases below are built from these. */
+  --color-green-50: #edf5f0;
+  --color-green-200: #c2ddcd;
+  --color-green-500: #3f8a63;
+  --color-green-700: #2c6446;
+  --color-red-50: #fbefee;
+  --color-red-200: #f0cfcb;
+  --color-red-500: #b4443d;
+  --color-red-700: #8c332e;
+  --color-amber-50: #fbf4e6;
+  --color-amber-200: #ecdcb2;
+  --color-amber-500: #9a6a15;
+  --color-amber-700: #77510f;
+
+  /* Surfaces / borders / text — semantic aliases used throughout components */
+  --color-surface: #f8f9fb;
+  --color-surface-card: #ffffff;
+  --color-surface-sunken: #f1f3f6;
+  --color-surface-nav: #fcfcfd;
+  --color-surface-hover: #f1f3f6;
+  --color-surface-selected: #f2f4fc;
+  --color-surface-inverse: #16181d;
+
+  /* A few more surface steps, split out of what used to be raw `gray-*`
+     utility classes sprinkled directly on components (bg-gray-25/50/200/300)
+     — pulled into named tokens so dark mode can retint them without also
+     dragging along the couple of spots (JsonViewer, the streaming log,
+     markdown code blocks) that use the literal gray-900/100/400/500/600
+     scale to render an intentionally-always-dark terminal surface, which
+     must NOT flip with the app theme. */
+  --color-surface-subtle: #fcfcfd; /* barely-there tray tint — card/modal footers */
+  --color-surface-hover-subtle: #f8f9fb; /* lightest hover step — secondary button hover */
+  --color-surface-active: #e4e7ec; /* pressed-button step */
+  --color-track: #e4e7ec; /* progress/skeleton track backgrounds */
+  --color-track-strong: #d1d6de; /* a more visible track (e.g. an in-progress bar) */
+
+  --color-border: #e4e7ec;
+  --color-border-strong: #a2aab8;
+  --color-border-focus: #3d49bd;
+
+  --color-ink: #16181d;
+  --color-ink-muted: #545c69;
+  --color-ink-faint: #737d8c;
+  --color-ink-disabled: #a2aab8;
+  --color-ink-inverse: #ffffff;
+  --color-ink-brand: #313a99;
+  --color-ink-link: #3d49bd;
+
+  /* Status (muted semantic colors — match/drift/partial/unknown) */
+  --color-match: #2c6446;
+  --color-match-bg: #edf5f0;
+  --color-match-border: #c2ddcd;
+  --color-match-dot: #3f8a63;
+
+  --color-drift: #8c332e;
+  --color-drift-bg: #fbefee;
+  --color-drift-border: #f0cfcb;
+  --color-drift-dot: #b4443d;
+
+  --color-partial: #77510f;
+  --color-partial-bg: #fbf4e6;
+  --color-partial-border: #ecdcb2;
+  --color-partial-dot: #9a6a15;
+
+  --color-unknown: #545c69;
+  --color-unknown-bg: #f1f3f6;
+  --color-unknown-border: #e4e7ec;
+  --color-unknown-dot: #a2aab8;
+
+  /* Filled/Empty — the fact-key expansion's own verdict axis, for facts
+     with no live-system source to compare against (only "did Confluence
+     document something," not correctness). Deliberately distinct from
+     match/unknown so they don't read as a real pass/fail signal. */
+  --color-filled: #1d5c8c;
+  --color-filled-bg: #eaf3f9;
+  --color-filled-border: #cde0ec;
+  --color-filled-dot: #2f7ab0;
+
+  --color-empty: #6b6f76;
+  --color-empty-bg: #f2f2f3;
+  --color-empty-border: #e2e3e5;
+  --color-empty-dot: #9a9ea6;
+
+  /* Radius — overrides Tailwind's own scale so rounded-* picks these up */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 1px rgba(22, 24, 29, 0.04);
+  --shadow-sm: 0 1px 2px rgba(22, 24, 29, 0.06), 0 1px 1px rgba(22, 24, 29, 0.03);
+  --shadow-md: 0 2px 4px rgba(22, 24, 29, 0.06), 0 4px 12px rgba(22, 24, 29, 0.05);
+  --shadow-lg: 0 8px 24px rgba(22, 24, 29, 0.1), 0 2px 6px rgba(22, 24, 29, 0.05);
+  --shadow-overlay: 0 16px 48px rgba(22, 24, 29, 0.18), 0 2px 8px rgba(22, 24, 29, 0.08);
+
+  /* Type scale — each pairs a size with its own line-height/letter-spacing */
+  --text-display: 32px;
+  --text-display--line-height: 38px;
+  --text-display--letter-spacing: -0.02em;
+  --text-h1: 24px;
+  --text-h1--line-height: 30px;
+  --text-h1--letter-spacing: -0.016em;
+  --text-h2: 19px;
+  --text-h2--line-height: 26px;
+  --text-h2--letter-spacing: -0.012em;
+  --text-h3: 16px;
+  --text-h3--line-height: 22px;
+  --text-h3--letter-spacing: -0.008em;
+  --text-body-lg: 15px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--letter-spacing: -0.004em;
+  --text-body: 14px;
+  --text-body--line-height: 21px;
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: 19px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-caption--letter-spacing: 0.002em;
+  --text-micro: 11px;
+  --text-micro--line-height: 14px;
+  --text-micro--letter-spacing: 0.04em;
+
+  /* Terminal-surface accents — the only place a color sits on --color-gray-900
+     (the streaming log), where the normal status colors are too dark to read. */
+  --color-term-match: #9dc9ae;
+  --color-term-drift: #e9a7a1;
+  --color-term-partial: #e2c689;
+
+  /* Layout constants */
+  --sidebar-width: 236px;
+  --page-max: 1240px;
+  --page-gutter: 28px;
+  --control-height-sm: 28px;
+  --control-height-md: 34px;
+  --control-height-lg: 40px;
+}
+
+/*
+ * Motion tokens — kept as plain custom properties (not @theme) since Tailwind v4 has
+ * no dedicated named-duration utility namespace; used via arbitrary values
+ * (`duration-[var(--duration-fast)]`) or referenced directly in a component's own
+ * transition shorthand where the stock `duration-*`/`ease-*` utilities aren't a close
+ * enough match.
+ */
+:root {
+  --duration-instant: 80ms;
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-slow: 240ms;
+  --duration-deliberate: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out-custom: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Ported from the original Claude Design tokens (tokens/colors.css) — this
+     one was missed in the initial @theme port even though 3 components
+     already reference it (the Input/Select/Combobox focus state). Not a
+     --color-* token: it is a full box-shadow expression, consumed as
+     shadow-[var(--focus-ring)], so it lives here with the other plain
+     custom properties instead of @theme. */
+  --focus-ring: 0 0 0 3px rgba(61, 73, 189, 0.22);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+    --duration-deliberate: 0ms;
+  }
+}
+
+html {
+  color-scheme: light;
+}
+/* `data-theme` is set by ThemeToggle.jsx (read from localStorage, applied
+   before paint by the inline script in index.html so there's no flash of
+   the wrong theme). No attribute at all = follow the OS setting. */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) {
+    color-scheme: dark;
+  }
+}
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/*
+ * Dark theme -- retints every SEMANTIC token above (surfaces/borders/ink/
+ * status families/brand accents/shadows/focus-ring), declared twice on
+ * purpose: once for the OS-level preference (no explicit user choice yet),
+ * once for data-theme="dark" (the explicit toggle choice, which must win
+ * even against an opposite OS setting). The :not([data-theme="light"]) on
+ * the first block is what lets an explicit "light" choice override a dark
+ * OS setting.
+ *
+ * Deliberately NOT touched here: the raw --color-gray-*/
+--color-brand-*
+  *
+  (500/600/800/900)/--color-red-500/--color-term-*
+  numeric
+  scales
+  --
+  those
+  *
+  still
+  carry
+  their
+  light-mode
+  values
+  in
+  dark
+  mode
+  too,
+because
+  a
+  few
+  *
+  spots
+  (JsonViewer, the streaming log panel, markdown code fences, the
+ * solid brand/danger buttons)
+  are
+  deliberately
+  theme-independent
+  (an
+ * always-dark terminal surface, or a saturated CTA color that stays as-is).
+  *
+  Only
+  the
+  handful
+  of
+  raw
+  gray-25/50/100/200/300
+  accents
+  that
+  were
+  adaptive
+  *
+  got
+  pulled
+  into
+  their
+  own
+  new
+  surface-*
+  tokens
+  above,
+specifically
+  so
+  *
+  they
+  could
+  be
+  retinted
+  here
+  without
+  dragging
+  those
+  fixed
+  surfaces
+  along.
+  */
+  @media
+  (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) {
+    --color-surface: #101116;
+    --color-surface-card: #17181e;
+    --color-surface-sunken: #0b0c10;
+    --color-surface-nav: #131419;
+    --color-surface-hover: #1f2128;
+    --color-surface-selected: #1a1d33;
+    --color-surface-inverse: #2b2e37;
+    --color-surface-subtle: #15161b;
+    --color-surface-hover-subtle: #1b1d23;
+    --color-surface-active: #262932;
+    --color-track: #262932;
+    --color-track-strong: #343842;
+
+    --color-border: #2a2d35;
+    --color-border-strong: #454a56;
+    --color-border-focus: #5a66c4;
+
+    --color-ink: #eef0f3;
+    --color-ink-muted: #a7adb8;
+    --color-ink-faint: #7d8492;
+    --color-ink-disabled: #565b66;
+    --color-ink-brand: #a7b2e5;
+    --color-ink-link: #8d97d9;
+
+    --color-brand-50: #1a1d33;
+    --color-brand-100: #242850;
+    --color-brand-200: #3d4570;
+    --color-brand-700: #a7b2e5;
+
+    --color-red-700: #d1746c;
+
+    --color-match: #7fc79a;
+    --color-match-bg: #16261d;
+    --color-match-border: #274a34;
+    --color-match-dot: #4caf76;
+
+    --color-drift: #e9948d;
+    --color-drift-bg: #2c1917;
+    --color-drift-border: #4a2620;
+    --color-drift-dot: #d1584f;
+
+    --color-partial: #e0b563;
+    --color-partial-bg: #2b2210;
+    --color-partial-border: #4a3a1c;
+    --color-partial-dot: #c98f2e;
+
+    --color-unknown: #a7adb8;
+    --color-unknown-bg: #1c1e24;
+    --color-unknown-border: #2a2d35;
+    --color-unknown-dot: #737d8c;
+
+    --color-filled: #6fb3dd;
+    --color-filled-bg: #12222c;
+    --color-filled-border: #1f3b4a;
+    --color-filled-dot: #4a9bc9;
+
+    --color-empty: #9a9ea6;
+    --color-empty-bg: #1c1d20;
+    --color-empty-border: #2c2d31;
+    --color-empty-dot: #75787e;
+
+    --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --focus-ring: 0 0 0 3px rgba(122, 138, 213, 0.35);
+  }
+}
+html[data-theme='dark'] {
+  --color-surface: #101116;
+  --color-surface-card: #17181e;
+  --color-surface-sunken: #0b0c10;
+  --color-surface-nav: #131419;
+  --color-surface-hover: #1f2128;
+  --color-surface-selected: #1a1d33;
+  --color-surface-inverse: #2b2e37;
+  --color-surface-subtle: #15161b;
+  --color-surface-hover-subtle: #1b1d23;
+  --color-surface-active: #262932;
+  --color-track: #262932;
+  --color-track-strong: #343842;
+
+  --color-border: #2a2d35;
+  --color-border-strong: #454a56;
+  --color-border-focus: #5a66c4;
+
+  --color-ink: #eef0f3;
+  --color-ink-muted: #a7adb8;
+  --color-ink-faint: #7d8492;
+  --color-ink-disabled: #565b66;
+  --color-ink-brand: #a7b2e5;
+  --color-ink-link: #8d97d9;
+
+  --color-brand-50: #1a1d33;
+  --color-brand-100: #242850;
+  --color-brand-200: #3d4570;
+  --color-brand-700: #a7b2e5;
+
+  --color-red-700: #d1746c;
+
+  --color-match: #7fc79a;
+  --color-match-bg: #16261d;
+  --color-match-border: #274a34;
+  --color-match-dot: #4caf76;
+
+  --color-drift: #e9948d;
+  --color-drift-bg: #2c1917;
+  --color-drift-border: #4a2620;
+  --color-drift-dot: #d1584f;
+
+  --color-partial: #e0b563;
+  --color-partial-bg: #2b2210;
+  --color-partial-border: #4a3a1c;
+  --color-partial-dot: #c98f2e;
+
+  --color-unknown: #a7adb8;
+  --color-unknown-bg: #1c1e24;
+  --color-unknown-border: #2a2d35;
+  --color-unknown-dot: #737d8c;
+
+  --color-filled: #6fb3dd;
+  --color-filled-bg: #12222c;
+  --color-filled-border: #1f3b4a;
+  --color-filled-dot: #4a9bc9;
+
+  --color-empty: #9a9ea6;
+  --color-empty-bg: #1c1d20;
+  --color-empty-border: #2c2d31;
+  --color-empty-dot: #75787e;
+
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --focus-ring: 0 0 0 3px rgba(122, 138, 213, 0.35);
+}
