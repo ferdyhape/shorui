@@ -1,7 +1,8 @@
 # Backend (FastAPI)
 
-Python 3.11+, FastAPI, pydantic v2 / pydantic-settings, python-docx, openpyxl. See
-[../CLAUDE.md](../CLAUDE.md) for commands and cross-cutting rules.
+Python 3.11+, FastAPI, pydantic v2 / pydantic-settings, python-docx, openpyxl, pypdf. See
+[../CLAUDE.md](../CLAUDE.md) for commands, cross-cutting rules and the shared `core/` modules
+(`naming`, `output`, `docx_runs`, `uploads`) every tool here is built on.
 
 ## Layering (keep it)
 
@@ -26,6 +27,10 @@ core/        config, errors, uploads, middleware - shared by all tools.
    for docx/xlsx (entry count + total uncompressed size, blocks zip bombs) -> 4. parse in a threadpool.
    Large outputs (multi-row zips) are written to `SpooledTemporaryFile` and streamed with a generator
    that closes the file; do not build big responses in memory.
+2. Several files in one request (pdf-tools, bulk-replace): `files: list[UploadFile] = File(...)`,
+   then `read_uploads(files, settings, *extensions)` - validates count (`max_files`) and size of
+   each. PDFs have no zip-bomb step (not zip containers); guard total page count instead (see
+   `pdf_tools.router._counted`).
 
 ## Conventions
 
@@ -45,14 +50,20 @@ core/        config, errors, uploads, middleware - shared by all tools.
   and any bug fixed (add a regression test first).
 - `test_samples.py` guards the downloadable samples; regenerate them when the template changes.
 
-## docx_service internals (read before editing)
+## docx_runs internals (read before editing - shared by text_replacer and bulk_replace)
 
-- `_paragraphs` walks `w:p` in the body plus each distinct header/footer part; `_text_nodes` returns
-  only `w:t` owned by that paragraph (text boxes hold nested paragraphs).
-- `_replace_in_paragraph` finds matches on the joined text, applies them in reverse order using
-  original offsets/lengths, and only rewrites nodes whose text changed.
-- `_write_text` sets `xml:space="preserve"` and expands `\n` into `<w:br/>` + new `<w:t>` siblings.
-- `generate()` returns a `GeneratedFile` (name, media type, file object, size); the caller closes it.
+Lives in `core/docx_runs.py`, not in either tool's own module - see "Shared core modules" in
+[../CLAUDE.md](../CLAUDE.md).
+
+- `paragraphs()` walks `w:p` in the body plus each distinct header/footer part; `text_nodes()`
+  returns only `w:t` owned by that paragraph (text boxes hold nested paragraphs).
+- `replace_matches()` takes pre-computed matches over the joined text, applies them in reverse
+  order using original offsets/lengths, and only rewrites nodes whose text changed. `render_all()`
+  is the convenience wrapper most tools call: `pattern.finditer(joined_text)` + a `value_for(match)`
+  callback.
+- `write_text()` sets `xml:space="preserve"` and expands `\n` into `<w:br/>` + new `<w:t>` siblings.
+- `core/output.single_file()`/`zip_files()` return a `GeneratedFile` (name, media type, file object,
+  size); the router streams and closes it via `core/output.stream_and_close()`.
 - `table_import.parse_table`: csv (delimiter sniffed, utf-8-sig then cp1252) and xlsx (first sheet,
   closes the read-only workbook), stops early past `max_rows`, dedupes/blank-skips headers, formats
   dates and integer floats as clean text.
@@ -60,4 +71,6 @@ core/        config, errors, uploads, middleware - shared by all tools.
 ## Config (env `SHORUI_*` or `backend/.env`)
 
 `MAX_UPLOAD_MB=20`, `MAX_UNCOMPRESSED_MB=100`, `MAX_ZIP_ENTRIES=2000`, `MAX_ROWS=1000`,
-`MAX_COLUMNS=200`, `MAX_CELL_CHARS=10000`, `CORS_ORIGINS` (JSON list), `LOG_LEVEL=INFO`.
+`MAX_COLUMNS=200`, `MAX_CELL_CHARS=10000`, `MAX_FILES=20` (per request, multi-file tools),
+`MAX_PDF_PAGES=1000` (total, pdf-tools), `SOFFICE_PATH` (None = auto-detect),
+`CONVERSION_TIMEOUT_SECONDS=60`, `CORS_ORIGINS` (JSON list), `LOG_LEVEL=INFO`.

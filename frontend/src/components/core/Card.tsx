@@ -27,7 +27,7 @@ export function Card({
     >
       {title || actions ? (
         <header
-          className="flex items-start justify-between gap-4"
+          className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2"
           style={{ padding: `${padding}px ${padding}px 0` }}
         >
           <div className="flex min-w-0 flex-col gap-0.5">

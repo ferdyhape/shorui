@@ -18,4 +18,25 @@ export const tools: Tool[] = [
     icon: 'replace',
     component: lazy(() => import('./tools/text-replacer/TextReplacer')),
   },
+  {
+    id: 'pdf-tools',
+    name: 'PDF Tools',
+    description: 'Merge, reorder, rotate and drop pages from one or more PDFs.',
+    icon: 'file-stack',
+    component: lazy(() => import('./tools/pdf-tools/PdfTools')),
+  },
+  {
+    id: 'docx-to-pdf',
+    name: 'Docx to PDF',
+    description: 'Convert a Word document to a PDF, laid out exactly like Word would print it.',
+    icon: 'file-output',
+    component: lazy(() => import('./tools/docx-to-pdf/DocxToPdf')),
+  },
+  {
+    id: 'bulk-replace',
+    name: 'Bulk Find & Replace',
+    description: 'Apply the same find/replace pairs across many Word documents at once.',
+    icon: 'file-search',
+    component: lazy(() => import('./tools/bulk-replace/BulkReplace')),
+  },
 ]

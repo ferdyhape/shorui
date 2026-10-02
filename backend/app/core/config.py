@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     max_rows: int = Field(1000, ge=1)
     max_columns: int = Field(200, ge=1)
     max_cell_chars: int = Field(10_000, ge=1)
+    max_files: int = Field(20, ge=1)  # per request, for tools that accept several uploads
+    max_pdf_pages: int = Field(1000, ge=1)  # across all input files combined
+    soffice_path: str | None = None  # None = auto-detect (see docx_to_pdf.converter)
+    conversion_timeout_seconds: int = Field(60, ge=1)
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
     log_level: str = "INFO"
 

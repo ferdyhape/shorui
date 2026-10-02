@@ -23,6 +23,21 @@ async def read_upload(file: UploadFile, settings: Settings) -> bytes:
     return data
 
 
+async def read_uploads(
+    files: list[UploadFile], settings: Settings, *extensions: str
+) -> list[tuple[str, bytes]]:
+    """Validate extension and size of each file in a multi-file upload."""
+    if not files:
+        raise InvalidFileError("Upload at least one file")
+    if len(files) > settings.max_files:
+        raise InvalidFileError(f"Too many files (max {settings.max_files})")
+    out = []
+    for file in files:
+        name = require_extension(file, *extensions)
+        out.append((name, await read_upload(file, settings)))
+    return out
+
+
 def ensure_zip_safe(data: bytes, settings: Settings) -> None:
     """Reject zip bombs. docx and xlsx are ZIP containers; check before parsing them."""
     try:

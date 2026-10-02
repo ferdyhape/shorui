@@ -1,8 +1,6 @@
 import logging
-from collections.abc import Iterator
 from pathlib import Path
-from typing import IO, Annotated, Literal
-from urllib.parse import quote
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -10,6 +8,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 from app.core.config import Settings, get_settings
 from app.core.errors import ERROR_RESPONSES
+from app.core.output import content_disposition, stream_and_close
 from app.core.uploads import ensure_zip_safe, read_upload, require_extension
 from app.tools.text_replacer import docx_service
 from app.tools.text_replacer.schemas import ExtractResponse, ParseTableResponse, parse_rows
@@ -19,7 +18,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/text-replacer", tags=["text-replacer"], responses=ERROR_RESPONSES)
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
-_CHUNK = 64 * 1024
 
 SAMPLES_DIR = Path(__file__).parent / "samples"
 SampleName = Literal["template.docx", "data.csv"]  # closed set: no path traversal possible
@@ -27,14 +25,6 @@ _SAMPLES: dict[str, tuple[str, str]] = {
     "template.docx": (docx_service.DOCX_MIME, "sample-template.docx"),
     "data.csv": ("text/csv", "sample-data.csv"),
 }
-
-
-def _stream_and_close(content: IO[bytes]) -> Iterator[bytes]:
-    try:
-        while chunk := content.read(_CHUNK):
-            yield chunk
-    finally:
-        content.close()
 
 
 async def _read_office_upload(
@@ -84,12 +74,9 @@ async def generate(
     )
     logger.info("generated %d document(s), template=%d bytes", len(parsed_rows), len(data))
     return StreamingResponse(
-        _stream_and_close(result.content),
+        stream_and_close(result.content),
         media_type=result.media_type,
-        headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(result.filename)}",
-            "Content-Length": str(result.size),
-        },
+        headers={**content_disposition(result.filename), "Content-Length": str(result.size)},
     )
 
 

@@ -15,6 +15,14 @@ const RULES = [
   ],
   [/\btext-(xs|sm|base|lg|xl|[2-9]xl)\b/, 'Tailwind default font size: use the token type scale'],
   [/\b(bg|text|border|ring)-\[#/, 'arbitrary colour: use a colour token'],
+  [
+    /\b(min|max)-\[[^\]]*\]:/,
+    'arbitrary breakpoint variant: use sm:/md:/lg:/xl: (tokens --breakpoint-*)',
+  ],
+  [
+    /@media[^{]*\((min|max)-width:\s*\d/,
+    'raw media query: layout breakpoints live in styles/tokens.css only; use sm:/md:/lg:/xl:',
+  ],
 ]
 
 function* files(dir) {

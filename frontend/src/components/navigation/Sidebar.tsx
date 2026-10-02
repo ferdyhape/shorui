@@ -26,7 +26,7 @@ function Item({
       type="button"
       onClick={() => onSelect(item.id)}
       aria-current={active ? 'page' : undefined}
-      className={`focus-ring flex h-8 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left font-sans text-body-sm transition-colors duration-120 ${
+      className={`focus-ring flex h-8 pointer-coarse:h-[var(--control-height-touch)] w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left font-sans text-body-sm transition-colors duration-120 ${
         active
           ? 'bg-surface-selected font-semibold text-ink-brand'
           : 'font-medium text-ink-muted hover:bg-surface-hover hover:text-ink'

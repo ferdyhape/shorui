@@ -32,7 +32,7 @@ export function Select({
           {label}
         </label>
       ) : null}
-      <div className="relative flex h-[var(--control-height-md)] items-center rounded-md border border-border bg-surface-card shadow-xs transition-colors duration-120 hover:border-border-strong has-[:focus]:border-border-focus has-[:focus]:shadow-[var(--focus-ring)]">
+      <div className="relative flex h-[var(--control-height-md)] pointer-coarse:h-[var(--control-height-touch)] items-center rounded-md border border-border bg-surface-card shadow-xs transition-colors duration-120 hover:border-border-strong has-[:focus]:border-border-focus has-[:focus]:shadow-[var(--focus-ring)]">
         <select
           id={selectId}
           className={`min-w-0 flex-1 cursor-pointer appearance-none border-none bg-transparent px-2.5 pr-7 font-sans text-body-sm text-ink outline-none ${className}`}

@@ -6,6 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.errors import ShoruiError, shorui_error_handler
 from app.core.middleware import request_context
+from app.tools.bulk_replace.router import router as bulk_replace_router
+from app.tools.docx_to_pdf.router import router as docx_to_pdf_router
+from app.tools.pdf_tools.router import router as pdf_tools_router
 from app.tools.text_replacer.router import router as text_replacer_router
 
 
@@ -30,6 +33,9 @@ def create_app() -> FastAPI:
     # Each tool = one router. Register new tools here.
     v1 = APIRouter(prefix="/api/v1")
     v1.include_router(text_replacer_router)
+    v1.include_router(pdf_tools_router)
+    v1.include_router(docx_to_pdf_router)
+    v1.include_router(bulk_replace_router)
     app.include_router(v1)
 
     @app.get("/api/health", tags=["meta"])

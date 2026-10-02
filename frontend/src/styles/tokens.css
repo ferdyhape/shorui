@@ -172,10 +172,29 @@
   /* Layout constants */
   --sidebar-width: 236px;
   --page-max: 1240px;
-  --page-gutter: 28px;
   --control-height-sm: 28px;
   --control-height-md: 34px;
   --control-height-lg: 40px;
+  --control-height-touch: 44px; /* min hit area on touch screens (pointer-coarse:) */
+
+  /* Responsive breakpoints — mobile-first, the ONLY widths layouts may change at.
+     Use the sm:/md:/lg:/xl: variants; never arbitrary min-[..px]/max-[..px].
+     Mirrored for JS in lib/breakpoints.ts (a test keeps them in sync). */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px; /* sidebar becomes a permanent column; below it is a drawer */
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+}
+
+/* Responsive page gutter: tight on phones, roomy from md up. Media queries cannot read
+   var(), so the md width is repeated here on purpose (keep equal to --breakpoint-md). */
+:root {
+  --page-gutter: 16px;
+}
+@media (min-width: 768px) {
+  :root {
+    --page-gutter: 28px;
+  }
 }
 
 /*

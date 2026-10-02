@@ -30,17 +30,50 @@ Rules (enforced by `npm run check:tokens`):
   pattern from `Select`.
 - Status semantics: errors `drift`, success/info `match`, warnings `partial`, neutral `unknown`.
 
+## Responsive design (mobile-first, required)
+
+Every page and component must work from **360px** wide up. Verify in the browser at 360, 768 and
+1280 before calling UI work done: no horizontal page scroll (`documentElement.scrollWidth <=
+innerWidth`), nothing clipped, all actions reachable.
+
+- **Breakpoint tokens** (`--breakpoint-*` in `tokens.css`): `sm` 640, `md` 768, `lg` 1024, `xl` 1280.
+  Write mobile styles first, then add `sm:`/`md:`/`lg:`/`xl:` overrides. Never use arbitrary
+  `min-[..px]:`/`max-[..px]:` or raw `@media (min-width: ..)` outside `tokens.css`
+  (`check:tokens` fails on them). JS mirror: `lib/breakpoints.ts` (a test keeps it equal to the CSS);
+  read it with `useMediaQuery(minWidthQuery('md'))`.
+- **Layout tokens:** `--page-gutter` is 16px on phones and 28px from `md` (defined in `tokens.css`;
+  use `px-[var(--page-gutter)]`, never a fixed padding). `--sidebar-width` for the sidebar.
+- **Shell:** below `md` the sidebar is an off-canvas drawer opened from `MobileTopBar` (closes on
+  navigate, backdrop click and Escape; `invisible` when closed so it leaves the tab order); from `md` it
+  is a permanent column with a collapse rail. The desktop collapsed preference is ignored in the drawer.
+- **Touch targets:** every interactive control uses `pointer-coarse:h-[var(--control-height-touch)]`
+  (44px) or a comparable size; `Button`, `Select`, sidebar items and table controls already do.
+- **No fixed widths that can overflow.** Prefer `min-w-0`, `flex-wrap`, `w-full sm:w-auto`. Wide
+  data (tables) scrolls inside its own `overflow-auto` container, never the page. Stack multi-column
+  layouts on phones (`flex-col md:flex-row`); full-width primary buttons on phones (`w-full sm:w-auto`).
+- Use `h-dvh` (not `h-screen`) for full-height shells so mobile browser chrome does not clip content.
+- Tests: `setViewport('mobile' | 'desktop')` from `src/test/viewport.ts` switches the `matchMedia`
+  stub; CSS is not applied in jsdom, so assert on behaviour (drawer state, rendered controls).
+
 ## Structure and patterns
 
 - One folder per tool in `src/tools/<name>/`: container component (`<Name>.tsx`), a `use<Name>` hook that
   owns async work, status (busy/error/notice) and an `AbortController`; a **pure reducer** (`reducer.ts`)
   for domain state; small step components; pure helpers in `rows.ts`-style modules with unit tests.
-- Shared UI in `src/components/`. Reuse `Button`, `Card`, `Select`, `Banner`, `FileDropzone`; style an
-  anchor as a button with `buttonClasses()` from `core/buttonStyles.ts` (kept out of `Button.tsx` so
-  fast refresh works). Add new primitives by porting the Kagami component's API, typed.
-- `ToolIntro` (top of the Text Replacer page) explains the tool in plain language with a worked
-  example for first-time users. Every new tool should get an equivalent intro at the top of its page.
-  It is dismissible (remembered per browser via `lib/useStoredFlag`) and leaves a "What does this tool do?" button to reopen it.
+- Shared UI in `src/components/`. Reuse `Button`, `Card`, `Input`, `Select`, `Banner`,
+  `FileDropzone`/`MultiFileDropzone`; style an anchor as a button with `buttonClasses()` from
+  `core/buttonStyles.ts` (kept out of `Button.tsx` so fast refresh works). Add new primitives by
+  porting the Kagami component's API, typed.
+- `components/ToolIntro.tsx` is the generic dismissible "what does this tool do" panel (title +
+  prose children, remembered per browser via `lib/useStoredFlag`, leaves a reopen button) - every
+  tool other than Text Replacer uses this one. Text Replacer keeps its own bespoke version (in its
+  own folder) with a worked-example diagram; don't copy that one, use the generic component.
+- `components/MultiFileDropzone.tsx` is `FileDropzone`'s multi-file sibling (`onFiles: (files:
+File[]) => void`, `multiple` input) for tools that accept several files per request (pdf-tools,
+  bulk-replace). Don't add a `multiple` prop to `FileDropzone` itself - keep the two separate.
+- Not every tool needs a reducer: a single trivial piece of state (one file, a busy flag) is fine as
+  plain `useState` in the `use<Name>` hook (see `docx-to-pdf/useDocxToPdf.ts`). Reach for a reducer
+  once there's more than one related piece of state to keep consistent (rows, a multi-step plan).
 - Layout: tool content is full width inside the page gutter (no `max-w-*`, no centering). Do not
   re-add a max width to `ToolPage`.
 - After a template loads, focus moves to the first data cell (`focusToken` = `templateVersion`).

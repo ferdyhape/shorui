@@ -42,16 +42,16 @@ export function OutputStep({
           value={filenameKey}
           options={options}
           onChange={(e) => onKeyChange(e.target.value)}
-          containerClassName="min-w-56"
+          containerClassName="w-full sm:w-auto sm:min-w-56"
         />
-        <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="flex w-full min-w-0 flex-col gap-1.5 sm:w-auto">
           <span className="text-body-sm font-medium text-ink-muted">Preview</span>
           <code className="flex h-[var(--control-height-md)] items-center truncate rounded-md border border-border bg-surface-sunken px-2.5 font-mono text-body-sm text-ink">
             {previewName}
           </code>
         </div>
         <Button
-          className="ml-auto"
+          className="w-full sm:ml-auto sm:w-auto"
           iconLeft="download"
           loading={generating}
           disabled={documentCount === 0}

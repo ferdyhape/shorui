@@ -2,9 +2,9 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: 'h-7 px-2.5 text-caption gap-1.5',
-  md: 'h-[var(--control-height-md)] px-3 text-body-sm gap-1.5',
-  lg: 'h-10 px-4 text-body-sm gap-2',
+  sm: 'h-7 px-2.5 text-caption gap-1.5 pointer-coarse:h-[var(--control-height-touch)]',
+  md: 'h-[var(--control-height-md)] px-3 text-body-sm gap-1.5 pointer-coarse:h-[var(--control-height-touch)]',
+  lg: 'h-10 px-4 text-body-sm gap-2 pointer-coarse:h-[var(--control-height-touch)]',
 }
 export const ICON_SIZES: Record<ButtonSize, number> = { sm: 14, md: 16, lg: 16 }
 

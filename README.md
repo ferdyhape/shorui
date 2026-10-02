@@ -4,6 +4,10 @@ By [ferdyhape](https://ferdyhape.com).
 
 Dashboard of document tools. React frontend, FastAPI backend. All processing runs in the backend.
 
+Tools: **Text Replacer** (docx mail-merge), **PDF Tools** (merge/reorder/rotate pages),
+**Docx to PDF** (LibreOffice conversion), **Bulk Find & Replace** (plain-text replace across
+many docx files).
+
 ## Run
 
 ```bash
@@ -30,12 +34,14 @@ The UI mirrors Kagami's design system; tokens live in `frontend/src/styles/token
 
 ```
 backend/app/
-  core/          config (env-driven), errors, upload safety, middleware
+  core/          config (env-driven), errors, upload safety, naming, file output, docx run-editing,
+                 middleware - shared by every tool
   tools/<name>/  router.py (HTTP only) · schemas.py · service code (no HTTP)
 frontend/src/
   api/           typed fetch client (ApiError, AbortSignal)
-  components/    shared UI (Banner, FileDropzone, ErrorBoundary)
-  tools/<name>/  one folder per tool: container, hook + pure reducer, step components
+  components/    shared UI (Banner, FileDropzone/MultiFileDropzone, ToolIntro, ErrorBoundary)
+  tools/<name>/  one folder per tool: container, hook (+ pure reducer where state is non-trivial),
+                 step components
 ```
 
 ## Add a tool
@@ -46,7 +52,12 @@ frontend/src/
 ## Configuration (backend)
 
 Env vars prefixed `SHORUI_` or a `backend/.env`: `MAX_UPLOAD_MB` (20), `MAX_UNCOMPRESSED_MB` (100),
-`MAX_ROWS` (1000), `MAX_COLUMNS`, `MAX_CELL_CHARS`, `CORS_ORIGINS` (JSON list), `LOG_LEVEL`.
+`MAX_ROWS` (1000), `MAX_COLUMNS`, `MAX_CELL_CHARS`, `MAX_FILES` (20), `MAX_PDF_PAGES` (1000),
+`SOFFICE_PATH` (auto-detected if unset), `CONVERSION_TIMEOUT_SECONDS` (60), `CORS_ORIGINS` (JSON
+list), `LOG_LEVEL`.
+
+Docx to PDF needs [LibreOffice](https://www.libreoffice.org/) installed on the machine running
+the backend; every other tool has no external dependency.
 
 ## Text Replacer
 
@@ -57,3 +68,25 @@ Placeholders in body, tables, text boxes, headers and footers are replaced, incl
 split across runs. Missing values become empty; newlines in values become line breaks.
 The UI offers a downloadable sample template and matching CSV (`backend/app/tools/text_replacer/samples/`,
 regenerate with `backend/scripts/build_sample_template.py`).
+
+## PDF Tools
+
+Upload one or more PDFs; every page of every file is listed in one ordered table. Reorder,
+rotate (90° steps) or drop individual pages, then generate a single merged PDF. No splitting
+or page-thumbnail preview. Sample PDFs to try it with:
+`backend/app/tools/pdf_tools/samples/`, regenerate with `backend/scripts/build_pdf_samples.py`.
+
+## Docx to PDF
+
+Upload a `.docx`, get back a `.pdf` rendered by headless LibreOffice - the same layout Word
+would print, as a file nobody can accidentally edit. Sample document:
+`backend/app/tools/docx_to_pdf/samples/`, regenerate with
+`backend/scripts/build_docx_to_pdf_sample.py`.
+
+## Bulk Find & Replace
+
+Upload one or more `.docx` files and a list of plain-text find/replace pairs (not `{{variable}}`
+syntax - it matches text exactly as it already appears, across runs Word may have split it over).
+One file in returns a `.docx`; several return a zip. Sample letters:
+`backend/app/tools/bulk_replace/samples/`, regenerate with
+`backend/scripts/build_bulk_replace_samples.py`.

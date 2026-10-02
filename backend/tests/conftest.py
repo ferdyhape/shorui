@@ -13,7 +13,9 @@ API = "/api/v1/text-replacer"
 
 @pytest.fixture
 def settings() -> Settings:
-    return Settings(max_upload_mb=1, max_uncompressed_mb=5, max_rows=5)
+    return Settings(
+        max_upload_mb=1, max_uncompressed_mb=5, max_rows=5, max_files=3, max_pdf_pages=10
+    )
 
 
 @pytest.fixture

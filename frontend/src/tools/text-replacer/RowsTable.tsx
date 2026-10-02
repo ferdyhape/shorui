@@ -37,7 +37,7 @@ const RowView = memo(function RowView({
             value={row.values[v] ?? ''}
             onChange={(e) => onChange(row.id, v, e.target.value)}
             aria-label={`${v}, row ${index + 1}`}
-            className="h-[var(--control-height-md)] w-full min-w-36 border-none bg-transparent px-2.5 font-sans text-body-sm text-ink outline-none focus:bg-surface-selected focus:shadow-[inset_0_0_0_1.5px_var(--color-border-focus)]"
+            className="h-[var(--control-height-md)] pointer-coarse:h-[var(--control-height-touch)] w-full min-w-36 border-none bg-transparent px-2.5 font-sans text-body-sm text-ink outline-none focus:bg-surface-selected focus:shadow-[inset_0_0_0_1.5px_var(--color-border-focus)]"
           />
         </td>
       ))}
@@ -49,7 +49,7 @@ const RowView = memo(function RowView({
           title={canDuplicate ? 'Copy row' : 'Row limit reached'}
           disabled={!canDuplicate}
           onClick={() => onDuplicate(row.id)}
-          className="focus-ring inline-grid h-7 w-7 cursor-pointer place-items-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink disabled:cursor-not-allowed disabled:opacity-55"
+          className="focus-ring inline-grid h-7 w-7 pointer-coarse:h-9 pointer-coarse:w-9 cursor-pointer place-items-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink disabled:cursor-not-allowed disabled:opacity-55"
         >
           <Icon name="copy" size={15} />
         </button>
@@ -57,7 +57,7 @@ const RowView = memo(function RowView({
           type="button"
           aria-label={`Delete row ${index + 1}`}
           onClick={() => onRemove(row.id)}
-          className="focus-ring inline-grid h-7 w-7 cursor-pointer place-items-center rounded-md text-ink-muted hover:bg-drift-bg hover:text-drift"
+          className="focus-ring inline-grid h-7 w-7 pointer-coarse:h-9 pointer-coarse:w-9 cursor-pointer place-items-center rounded-md text-ink-muted hover:bg-drift-bg hover:text-drift"
         >
           <Icon name="x" size={15} />
         </button>

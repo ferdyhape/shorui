@@ -9,9 +9,12 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { Credit } from './components/navigation/Credit'
+import { MobileTopBar } from './components/navigation/MobileTopBar'
 import { PageHeader } from './components/navigation/PageHeader'
 import { Sidebar, type SidebarSection } from './components/navigation/Sidebar'
 import { ThemeToggle } from './components/navigation/ThemeToggle'
+import { minWidthQuery } from './lib/breakpoints'
+import { useMediaQuery } from './lib/useMediaQuery'
 import { tools, type Tool } from './tools'
 
 const SECTIONS: SidebarSection[] = [
@@ -34,13 +37,23 @@ function readCollapsed(): boolean {
 function Shell() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const isDesktop = useMediaQuery(minWidthQuery('md'))
   const [collapsed, setCollapsed] = useState(readCollapsed)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const activeId = pathname.split('/')[1]
+  const drawerVisible = drawerOpen && !isDesktop
 
   useEffect(() => {
     const tool = tools.find((t) => t.id === activeId)
     document.title = tool ? `${tool.name} · Shorui` : 'Shorui'
   }, [activeId])
+
+  useEffect(() => {
+    if (!drawerVisible) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setDrawerOpen(false)
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [drawerVisible])
 
   function toggleCollapsed() {
     setCollapsed((prev) => {
@@ -54,21 +67,46 @@ function Shell() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface">
-      <Sidebar
-        sections={SECTIONS}
-        activeId={activeId}
-        onSelect={(id) => navigate(`/${id}`)}
-        collapsed={collapsed}
-        onToggleCollapse={toggleCollapsed}
-        footer={
-          <div className="flex flex-col gap-2.5">
-            <Credit />
-            <ThemeToggle />
-          </div>
-        }
-      />
-      <main className="min-w-0 flex-1 overflow-y-auto">
+    <div className="flex h-dvh flex-col overflow-hidden bg-surface md:flex-row">
+      <MobileTopBar open={drawerVisible} onToggle={() => setDrawerOpen((o) => !o)} />
+
+      {drawerVisible && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          tabIndex={-1}
+          onClick={() => setDrawerOpen(false)}
+          className="fixed inset-0 z-30 cursor-default bg-surface-inverse/50 md:hidden"
+        />
+      )}
+
+      {/* Below md the sidebar is an off-canvas drawer; from md up it is a permanent column.
+          `invisible` keeps the closed drawer out of the tab order and screen readers. */}
+      <div
+        id="app-navigation"
+        className={`fixed inset-y-0 left-0 z-40 max-w-[85vw] transition-[transform,visibility] duration-[var(--duration-normal)] md:visible md:static md:z-auto md:max-w-none md:translate-x-0 ${
+          drawerVisible ? 'visible translate-x-0 shadow-overlay' : 'invisible -translate-x-full'
+        }`}
+      >
+        <Sidebar
+          sections={SECTIONS}
+          activeId={activeId}
+          onSelect={(id) => {
+            setDrawerOpen(false)
+            navigate(`/${id}`)
+          }}
+          collapsed={isDesktop && collapsed}
+          onToggleCollapse={isDesktop ? toggleCollapsed : undefined}
+          footer={
+            <div className="flex flex-col gap-2.5">
+              <Credit />
+              <ThemeToggle />
+            </div>
+          }
+        />
+      </div>
+
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <Outlet />
       </main>
     </div>

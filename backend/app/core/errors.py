@@ -36,6 +36,20 @@ class PayloadTooLargeError(ShoruiError):
     code = "payload_too_large"
 
 
+class ConversionError(ShoruiError):
+    """The input was valid but an external converter (e.g. LibreOffice) failed on it."""
+
+    status_code = 422
+    code = "conversion_failed"
+
+
+class ServiceUnavailableError(ShoruiError):
+    """A required external tool (e.g. LibreOffice) is not installed/reachable."""
+
+    status_code = 503
+    code = "service_unavailable"
+
+
 async def shorui_error_handler(_: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, ShoruiError)  # noqa: S101 - narrowing for the type checker
     return JSONResponse(
@@ -46,4 +60,6 @@ async def shorui_error_handler(_: Request, exc: Exception) -> JSONResponse:
 ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
     400: {"model": ErrorResponse, "description": "Invalid input"},
     413: {"model": ErrorResponse, "description": "Upload too large"},
+    422: {"model": ErrorResponse, "description": "Could not process the file"},
+    503: {"model": ErrorResponse, "description": "A required external tool is unavailable"},
 }

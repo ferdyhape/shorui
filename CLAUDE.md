@@ -1,8 +1,13 @@
 # Shorui
 
 Dashboard of document tools. React frontend + FastAPI backend. All document processing runs in the
-backend; the frontend only collects input and shows results. First tool: **Text Replacer**
-(mail-merge for `.docx`: `{{variable}}` placeholders + rows of data, one output document per row).
+backend; the frontend only collects input and shows results. Tools so far:
+
+- **Text Replacer** - mail-merge for `.docx`: `{{variable}}` placeholders + rows of data, one
+  output document per row.
+- **PDF Tools** - merge, reorder, rotate and drop pages from one or more PDFs into one PDF.
+- **Docx to PDF** - convert a `.docx` to `.pdf` via headless LibreOffice.
+- **Bulk Find & Replace** - apply the same literal find/replace pairs across many `.docx` files.
 
 Read this file first. Deeper rules live in [backend/CLAUDE.md](backend/CLAUDE.md) and
 [frontend/CLAUDE.md](frontend/CLAUDE.md). You should not need to explore the code to start working.
@@ -29,7 +34,9 @@ Definition of done for any change: backend `pytest` + `ruff check` + `mypy app` 
 dev.sh                         one-command dev runner
 backend/app/
   main.py                      create_app(): CORS, middleware, error handler, /api/v1 router registry
-  core/                        config (pydantic-settings, SHORUI_* env), errors, uploads, middleware
+  core/                        config (pydantic-settings, SHORUI_* env), errors, uploads, middleware,
+                                output (GeneratedFile/zip streaming), naming (safe_name/dedupe_names),
+                                docx_runs (shared run-splitting engine for every .docx-editing tool)
   tools/<name>/                one folder per tool: router.py (HTTP only), schemas.py, service code
   tools/text_replacer/samples/ downloadable sample template.docx + data.csv (generated, see below)
 backend/scripts/               build_sample_template.py (regenerates the samples)
@@ -37,8 +44,8 @@ backend/tests/                 pytest; conftest.py has client/settings/template 
 frontend/src/
   styles/tokens.css            design tokens (mirrored from Kagami) - single source of truth
   index.css                    Tailwind v4 + fonts + base styles
-  components/core|navigation/  Button, Card, Select, Icon, Sidebar, PageHeader, ThemeToggle
-  components/                  Banner, FileDropzone, ErrorBoundary (shared)
+  components/core|navigation/  Button, Card, Input, Select, Icon, Sidebar, PageHeader, ThemeToggle
+  components/                  Banner, FileDropzone, MultiFileDropzone, ToolIntro, ErrorBoundary
   api/                         typed fetch client (ApiError, AbortSignal) + per-tool API modules
   tools.ts                     tool registry: sidebar entries and routes come from here
   tools/<name>/                one folder per tool
@@ -54,6 +61,8 @@ frontend/src/
 - **Privacy:** never log request bodies, file names or cell values. Uploads can contain personal data.
 - **Limits:** every upload/row/column/cell count has a configured limit (`core/config.py`); the
   frontend mirrors the two it needs (`frontend/src/lib/limits.ts`). Change both when you change a default.
+- **Responsive:** every page works from 360px up (mobile-first, token breakpoints `sm/md/lg/xl`,
+  drawer navigation below `md`, 44px touch targets). Rules and tokens: frontend/CLAUDE.md.
 - **Design:** UI must match Kagami (`D:\Research\FunkyAI\kagami\web\frontend-v1`). Use tokens only;
   see frontend/CLAUDE.md.
 - **Dependencies:** prefer what is already installed. Pin nothing exotic; ask before adding a heavy one.
@@ -67,6 +76,22 @@ frontend/src/
    components), `frontend/src/api/<name>.ts`, then add an entry (id, name, description, icon,
    lazy component) to `frontend/src/tools.ts`. If the icon is new, add it to `components/core/Icon.tsx`.
 3. Update the README "Layout"/tool notes if structure changed; keep this file accurate.
+
+## Shared core modules (use these, don't duplicate)
+
+- `core/naming.py`: `safe_name()` (strip characters a filesystem/zip can't hold), `dedupe_names()`
+  (case-insensitive `-2`, `-3` suffixes). Every tool that writes file names uses these.
+- `core/output.py`: `GeneratedFile` (filename, media_type, file-like content, size),
+  `single_file()`, `zip_files()` (spooled, bounded memory), `stream_and_close()`,
+  `content_disposition()`. Every router streams its result this way.
+- `core/docx_runs.py`: the engine behind every `.docx` text edit. `load_docx()`, `paragraphs()`
+  (body + nested tables + text boxes + headers/footers), `joined_text()`, `render_all(doc, pattern,
+value_for)` (matches `pattern` against each paragraph's _joined_ text - Word can split one string
+  across several runs - and rewrites only the runs it spans). `text_replacer` ({{variable}} syntax)
+  and `bulk_replace` (literal text) are both thin wrappers around this; a third docx-editing tool
+  should be too, not a new copy of the run-walking logic.
+- `core/uploads.py`: `require_extension`, `read_upload` (size-capped), `read_uploads` (multi-file:
+  extension + count + size), `ensure_zip_safe` (zip-bomb guard for docx/xlsx).
 
 ## Text Replacer (domain facts)
 
@@ -89,6 +114,57 @@ frontend/src/
   `cd backend && PYTHONPATH=. .venv/Scripts/python scripts/build_sample_template.py`, commit both
   generated files. `tests/test_samples.py` fails if the CSV header and template variables drift.
 
+## PDF Tools (domain facts)
+
+- Backend: `pypdf`. `PageOp(file_index, page_index, rotate)` - `file_index` is the position of a
+  file in the multipart `files` list, **not** a frontend-assigned id; the frontend's `fileId` is
+  kept equal to that position (it never removes a whole file, only pages, so the two never drift).
+- `rotate` is degrees clockwise, must be a multiple of 90; applied on top of the page's own rotation
+  via `PageObject.rotate()`. Encrypted PDFs: pypdf tries an empty password once, else `InvalidFileError`
+  (no `cryptography` package installed - this is a cheap default, not full encrypted-PDF support).
+- Endpoints: `POST /inspect` (files -> page counts), `POST /process` (files + `plan` JSON array of
+  `{file_index, page_index, rotate}` + `output_name` -> one PDF). No split/zip output - merge only.
+- Settings: `max_files` (per request, shared with bulk-replace), `max_pdf_pages` (total pages
+  across all files in one request, checked both per-file at upload and against the plan length).
+- Frontend has no thumbnail rendering (no PDF-render library installed); pages are listed as
+  "filename — page N" text rows, reordered/rotated/removed with buttons (no drag-and-drop).
+- Samples: `sample-a.pdf` (2 pages), `sample-b.pdf` (1 page), each page just a short label drawn
+  with the standard Helvetica font (no embedding, no extra dependency - see the script). Edit
+  `backend/scripts/build_pdf_samples.py`, run
+  `cd backend && .venv/Scripts/python scripts/build_pdf_samples.py`, commit the regenerated files.
+  `GET /samples/{sample-a.pdf|sample-b.pdf}`.
+
+## Docx to PDF (domain facts)
+
+- Shells out to headless LibreOffice (`app/tools/docx_to_pdf/converter.py`). Each conversion gets
+  its own temp profile dir (`-env:UserInstallation=...`) so concurrent requests never collide on
+  LibreOffice's single-instance lock.
+- `resolve_soffice()`: `SHORUI_SOFFICE_PATH` env override, else `PATH`, else a few common install
+  paths (Windows default: `C:\Program Files\LibreOffice\program\soffice.exe`). Missing ->
+  `ServiceUnavailableError` (503). Non-zero exit or timeout -> `ConversionError` (422).
+- `tests/test_docx_to_pdf.py` has fast mocked-subprocess unit tests plus two real-LibreOffice tests
+  gated on `shutil.which`/common paths, so they still pass on a machine without LibreOffice.
+- Sample: `sample.docx` - plain prose with a table and bullets, deliberately not a Text Replacer
+  template (no `{{placeholders}}`), to demonstrate layout conversion rather than mail-merge. Edit
+  `backend/scripts/build_docx_to_pdf_sample.py`, run
+  `cd backend && .venv/Scripts/python scripts/build_docx_to_pdf_sample.py`, commit the file.
+  `GET /samples/sample.docx`.
+
+## Bulk Find & Replace (domain facts)
+
+- Literal text, not `{{variable}}` syntax: `build_pattern()` turns `[(find, replace), ...]` into one
+  alternation regex with **longest term first** (so "Order Total" isn't shadowed by "Order"), then
+  reuses `core.docx_runs.render_all`. Case-sensitive, exact substring match.
+- Output name = original filename (sanitized, deduped), not derived from a data key. One file in
+  -> a `.docx`; several -> `bulk-replace_<N>-files.zip`.
+- Endpoint: `POST /process` (files + `pairs` JSON array of `[find, replace]` tuples).
+- Samples: `letter-budi.docx` + `letter-sari.docx`, two short letters both mentioning "Acme Corp"
+  several times, including the header and one occurrence deliberately split across two runs (so
+  trying the tool exercises the same run-splitting path the tests do). Edit
+  `backend/scripts/build_bulk_replace_samples.py`, run
+  `cd backend && .venv/Scripts/python scripts/build_bulk_replace_samples.py`, commit both files.
+  `GET /samples/{letter-budi.docx|letter-sari.docx}`.
+
 ## Gotchas (learned the hard way)
 
 - The Bash tool breaks on heredocs containing quote-heavy TSX/JSX (`unexpected EOF`). Use the Write
@@ -101,4 +177,12 @@ frontend/src/
 - python-docx has no useful type stubs; XML-level code is typed `Any` on purpose.
 - `TestClient` warns about `httpx` deprecation; already filtered in `pyproject.toml`.
 - LibreOffice is at `C:\Program Files\LibreOffice\program\soffice.exe`; use
-  `--headless --convert-to png` to eyeball a generated docx.
+  `--headless --convert-to png` to eyeball a generated docx. `docx-to-pdf` also shells out to it.
+- `pypdf`'s `PdfWriter.add_page()` returns the added page - rotate that returned object, not the
+  source page (rotating the source would also rotate it in any other output built from the same
+  reader). No `cryptography` package is installed, so AES-encrypted PDFs can't be decrypted even
+  with an empty password; this is a deliberate scope cut, not a bug.
+- A multi-file `<input>` needs `userEvent.upload(input, files)` in tests; for a file type the
+  `accept` attribute would filter out, pass `{ applyAccept: false }` or upload fails silently.
+- A JSX expression with `{var}text{var2}` renders as several text nodes - `getByText('exact
+string')` won't match it. Build the full string in one template literal before rendering it.

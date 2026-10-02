@@ -55,7 +55,7 @@ export function ThemeToggle() {
           aria-label={o.label}
           title={o.label}
           onClick={() => setTheme(o.value)}
-          className={`focus-ring flex h-6 flex-1 cursor-pointer items-center justify-center rounded-sm transition-colors duration-120 ${
+          className={`focus-ring flex h-6 pointer-coarse:h-9 flex-1 cursor-pointer items-center justify-center rounded-sm transition-colors duration-120 ${
             theme === o.value
               ? 'bg-surface-card text-ink shadow-xs'
               : 'text-ink-faint hover:text-ink'
