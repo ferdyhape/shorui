@@ -3,4 +3,5 @@ src-tauri/target/
 src-tauri/binaries/
 src-tauri/dist-frontend/
 src-tauri/gen/
+src-tauri/.cargo/
 build-tmp/
