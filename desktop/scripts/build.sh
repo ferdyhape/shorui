@@ -5,6 +5,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DESKTOP="$ROOT/desktop"
+source "$DESKTOP/scripts/_toolchain.sh"
 
 "$DESKTOP/scripts/sync.sh"
 

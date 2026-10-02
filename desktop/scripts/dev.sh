@@ -6,6 +6,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DESKTOP="$ROOT/desktop"
+source "$DESKTOP/scripts/_toolchain.sh"
 FRONTEND_PORT="${FRONTEND_PORT:-5173}"
 
 if ! curl -s -o /dev/null "http://127.0.0.1:$FRONTEND_PORT"; then
