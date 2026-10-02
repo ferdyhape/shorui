@@ -1,8 +1,8 @@
 # Backend (FastAPI)
 
-Python 3.11+, FastAPI, pydantic v2 / pydantic-settings, python-docx, openpyxl, pypdf. See
+Python 3.11+, FastAPI, pydantic v2 / pydantic-settings, python-docx, openpyxl, pypdf, Pillow. See
 [../CLAUDE.md](../CLAUDE.md) for commands, cross-cutting rules and the shared `core/` modules
-(`naming`, `output`, `docx_runs`, `uploads`) every tool here is built on.
+(`naming`, `output`, `docx_runs`, `uploads`, `pdf_text`, `pdf_images`) every tool here is built on.
 
 ## Layering (keep it)
 
@@ -62,6 +62,8 @@ Lives in `core/docx_runs.py`, not in either tool's own module - see "Shared core
   is the convenience wrapper most tools call: `pattern.finditer(joined_text)` + a `value_for(match)`
   callback.
 - `write_text()` sets `xml:space="preserve"` and expands `\n` into `<w:br/>` + new `<w:t>` siblings.
+- `roots()` is also exposed for tools that edit structure rather than paragraph text - docx_cleaner
+  walks it directly (snapshot the elements first, then remove/unwrap) rather than matching text.
 - `core/output.single_file()`/`zip_files()` return a `GeneratedFile` (name, media type, file object,
   size); the router streams and closes it via `core/output.stream_and_close()`.
 - `table_import.parse_table`: csv (delimiter sniffed, utf-8-sig then cp1252) and xlsx (first sheet,
@@ -73,4 +75,5 @@ Lives in `core/docx_runs.py`, not in either tool's own module - see "Shared core
 `MAX_UPLOAD_MB=20`, `MAX_UNCOMPRESSED_MB=100`, `MAX_ZIP_ENTRIES=2000`, `MAX_ROWS=1000`,
 `MAX_COLUMNS=200`, `MAX_CELL_CHARS=10000`, `MAX_FILES=20` (per request, multi-file tools),
 `MAX_PDF_PAGES=1000` (total, pdf-tools), `SOFFICE_PATH` (None = auto-detect),
-`CONVERSION_TIMEOUT_SECONDS=60`, `CORS_ORIGINS` (JSON list), `LOG_LEVEL=INFO`.
+`CONVERSION_TIMEOUT_SECONDS=60`, `MAX_STAMP_TEXT_CHARS=200` (pdf-stamp), `MAX_IMAGE_MB=15`
+(per image, image-to-pdf), `CORS_ORIGINS` (JSON list), `LOG_LEVEL=INFO`.

@@ -8,6 +8,10 @@ backend; the frontend only collects input and shows results. Tools so far:
 - **PDF Tools** - merge, reorder, rotate and drop pages from one or more PDFs into one PDF.
 - **Docx to PDF** - convert a `.docx` to `.pdf` via headless LibreOffice.
 - **Bulk Find & Replace** - apply the same literal find/replace pairs across many `.docx` files.
+- **Docx Cleaner** - strip document properties, reviewer comments and/or tracked changes.
+- **PDF Compress** - recompress a PDF's content streams and embedded images.
+- **PDF Stamp** - add a watermark and/or page numbers to every page of a PDF.
+- **Image to PDF** - combine one or more images into a single PDF.
 
 Read this file first. Deeper rules live in [backend/CLAUDE.md](backend/CLAUDE.md) and
 [frontend/CLAUDE.md](frontend/CLAUDE.md). You should not need to explore the code to start working.
@@ -36,7 +40,9 @@ backend/app/
   main.py                      create_app(): CORS, middleware, error handler, /api/v1 router registry
   core/                        config (pydantic-settings, SHORUI_* env), errors, uploads, middleware,
                                 output (GeneratedFile/zip streaming), naming (safe_name/dedupe_names),
-                                docx_runs (shared run-splitting engine for every .docx-editing tool)
+                                docx_runs (shared run-splitting engine for every .docx-editing tool),
+                                pdf_text (draw text/watermarks on a PDF page, no extra dependency),
+                                pdf_images (embed an image as a PDF page, via Pillow)
   tools/<name>/                one folder per tool: router.py (HTTP only), schemas.py, service code
   tools/text_replacer/samples/ downloadable sample template.docx + data.csv (generated, see below)
 backend/scripts/               build_sample_template.py (regenerates the samples)
@@ -44,8 +50,10 @@ backend/tests/                 pytest; conftest.py has client/settings/template 
 frontend/src/
   styles/tokens.css            design tokens (mirrored from Kagami) - single source of truth
   index.css                    Tailwind v4 + fonts + base styles
-  components/core|navigation/  Button, Card, Input, Select, Icon, Sidebar, PageHeader, ThemeToggle
-  components/                  Banner, FileDropzone, MultiFileDropzone, ToolIntro, ErrorBoundary
+  components/core|navigation/  Button, Card, Input, Select, Checkbox, Icon, Sidebar, PageHeader,
+                                ThemeToggle
+  components/                  Banner, FileDropzone, MultiFileDropzone, FileList, ToolIntro,
+                                ErrorBoundary
   api/                         typed fetch client (ApiError, AbortSignal) + per-tool API modules
   tools.ts                     tool registry: sidebar entries and routes come from here
   tools/<name>/                one folder per tool
@@ -65,7 +73,9 @@ frontend/src/
   drawer navigation below `md`, 44px touch targets). Rules and tokens: frontend/CLAUDE.md.
 - **Design:** UI must match Kagami (`D:\Research\FunkyAI\kagami\web\frontend-v1`). Use tokens only;
   see frontend/CLAUDE.md.
-- **Dependencies:** prefer what is already installed. Pin nothing exotic; ask before adding a heavy one.
+- **Dependencies:** prefer what is already installed. Pin nothing exotic; ask before adding a heavy
+  one. Pillow was added for image-to-pdf/pdf-compress (standard, not exotic); everything else reuses
+  pypdf/python-docx already in use.
 
 ## Add a tool (checklist)
 
@@ -92,6 +102,13 @@ value_for)` (matches `pattern` against each paragraph's _joined_ text - Word can
   should be too, not a new copy of the run-walking logic.
 - `core/uploads.py`: `require_extension`, `read_upload` (size-capped), `read_uploads` (multi-file:
   extension + count + size), `ensure_zip_safe` (zip-bomb guard for docx/xlsx).
+- `core/pdf_text.py`: `add_centered_lines_page`/`make_text_document` (plain text pages, used by
+  every sample-PDF builder script), `build_overlay_page`/`build_footer_page` (translucent/rotated
+  text merged onto an existing page - pdf_stamp's watermark and page numbers). No extra dependency:
+  a readable page only needs the standard Helvetica font and a short content stream.
+- `core/pdf_images.py`: `add_image_page(writer, image_bytes)` - Pillow normalizes any input format
+  to JPEG, pypdf embeds the JPEG bytes directly as a `/DCTDecode` XObject (no re-encoding of pixel
+  data needed). Used by image_to_pdf and the pdf-compress sample builder.
 
 ## Text Replacer (domain facts)
 
@@ -165,6 +182,58 @@ value_for)` (matches `pattern` against each paragraph's _joined_ text - Word can
   `cd backend && .venv/Scripts/python scripts/build_bulk_replace_samples.py`, commit both files.
   `GET /samples/{letter-budi.docx|letter-sari.docx}`.
 
+## Docx Cleaner (domain facts)
+
+- Three independent toggles, at least one required: strip properties (python-docx
+  `core_properties`, string fields only - dates are left alone, python-docx rejects `None` for
+  them), strip comments (removes `w:commentRangeStart/End`/`w:commentReference` anchors via
+  `core.docx_runs.roots()`; does **not** delete the underlying `comments.xml` part - python-docx
+  exposes no API for that, and an orphaned unreferenced part is harmless), accept tracked changes
+  (`w:ins`/`w:moveTo` unwrapped in place keeping their text, `w:del`/`w:moveFrom` and the
+  `*PrChange` metadata tags removed outright - python-docx has no API for any of this either, so
+  it is raw lxml tree surgery, snapshot-then-mutate to stay safe while walking).
+- Endpoint: `POST /clean` (file + three `Form` bools, default all `true`) -> one `.docx`, named
+  `<stem>-cleaned.docx`.
+- Sample: `sample.docx` - real properties, a real comment (python-docx 1.2+ has native
+  `add_comment`), and a real tracked insertion/deletion built with raw OXML (the same technique
+  `_accept_revisions` undoes). Edit `backend/scripts/build_docx_cleaner_sample.py`, regenerate,
+  commit. `GET /samples/sample.docx`.
+
+## PDF Compress (domain facts)
+
+- `PdfWriter.append(reader)` then per page: `compress_content_streams()` + re-encode every
+  embedded image via `page.images[i].replace(image, quality=N)` (quality 10-95, validated). A
+  single image that fails to re-encode is logged and left at its original encoding, not fatal.
+- Endpoint: `POST /compress` (file + `quality` Form, default 50) -> one PDF. Reports
+  `X-Original-Size`/`X-Compressed-Size` response headers (both listed in CORS `expose_headers` in
+  `main.py` - add any new custom header there too, or the browser cannot read it).
+- Sample: `sample-photo.pdf` - two pages of per-pixel random colour ("noisy", like a real photo;
+  a flat/text PDF would barely shrink). Edit `backend/scripts/build_pdf_compress_sample.py`.
+
+## PDF Stamp (domain facts)
+
+- Watermark: one overlay page (`pdf_text.build_overlay_page`, diagonal, 20% opacity) built once
+  and `page.merge_page()`'d onto every page - cheap, and pages in a given PDF are near-always one
+  uniform size. Page numbers: one "Page N of M" footer overlay per page (text differs per page).
+  At least one of the two must be supplied.
+- Endpoint: `POST /stamp` (file + `watermark_text` Form, `page_numbers` Form bool) -> one PDF,
+  named `<stem>-stamped.pdf`.
+- No sample of its own - the frontend links PDF Tools' `sample-a.pdf` (`api/pdfTools.ts`'s
+  `sampleUrl`), a deliberate cross-tool reuse rather than generating a near-duplicate file.
+
+## Image to PDF (domain facts)
+
+- `core.pdf_images.add_image_page` per upload, one PDF page per image, page size = the image's
+  own aspect ratio (capped at 1500pt on the long side). PNG/WebP transparency is flattened onto a
+  white background before JPEG re-encoding (a PDF image here has no alpha channel).
+- Endpoint: `POST /build` (files + `output_name` Form, default `images.pdf`) -> one PDF. Images
+  combine in upload order; there is no reorder step (a deliberate scope cut, like PDF Tools having
+  no thumbnails - note it if this needs to change later).
+- Per-image size cap is `max_image_mb` (separate from the generic per-file `max_upload_mb`,
+  checked in the router after `read_uploads`).
+- Samples: `sample-1.jpg`/`sample-2.jpg`, small labelled JPEGs via Pillow's `ImageDraw`. Edit
+  `backend/scripts/build_image_to_pdf_samples.py`.
+
 ## Gotchas (learned the hard way)
 
 - The Bash tool breaks on heredocs containing quote-heavy TSX/JSX (`unexpected EOF`). Use the Write
@@ -186,3 +255,12 @@ value_for)` (matches `pattern` against each paragraph's _joined_ text - Word can
   `accept` attribute would filter out, pass `{ applyAccept: false }` or upload fails silently.
 - A JSX expression with `{var}text{var2}` renders as several text nodes - `getByText('exact
 string')` won't match it. Build the full string in one template literal before rendering it.
+- A `<label>` whose JSX also renders a hint/description _inside_ it changes the accessible name to
+  "label + hint" - `getByLabelText('short label')` then fails. Wire the hint as `aria-describedby`
+  on the input instead (see `Checkbox.tsx`) so the name stays just the label.
+- `userEvent.upload` on an input with `accept="image/*"` silently drops files whose `File` object
+  has no (or a non-image) MIME type - `new File(['x'], 'a.jpg')` alone is not enough; pass
+  `{ type: 'image/jpeg' }` explicitly, or the upload is filtered out with no error.
+- pypdf has no "image to PDF page" API; a JPEG's own bytes are a valid `/DCTDecode` image stream
+  as-is (no re-encoding of pixel data) - see `core/pdf_images.py` before reaching for a heavier
+  dependency to do this.

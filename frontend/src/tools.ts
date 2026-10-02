@@ -39,4 +39,32 @@ export const tools: Tool[] = [
     icon: 'file-search',
     component: lazy(() => import('./tools/bulk-replace/BulkReplace')),
   },
+  {
+    id: 'docx-cleaner',
+    name: 'Docx Cleaner',
+    description: 'Strip author metadata, comments and tracked changes before sharing a .docx.',
+    icon: 'eraser',
+    component: lazy(() => import('./tools/docx-cleaner/DocxCleaner')),
+  },
+  {
+    id: 'pdf-compress',
+    name: 'PDF Compress',
+    description: "Shrink a PDF's file size by recompressing its content and embedded images.",
+    icon: 'minimize-2',
+    component: lazy(() => import('./tools/pdf-compress/PdfCompress')),
+  },
+  {
+    id: 'pdf-stamp',
+    name: 'PDF Stamp',
+    description: 'Add a watermark and/or page numbers to every page of a PDF.',
+    icon: 'stamp',
+    component: lazy(() => import('./tools/pdf-stamp/PdfStamp')),
+  },
+  {
+    id: 'image-to-pdf',
+    name: 'Image to PDF',
+    description: 'Combine one or more images into a single PDF, one image per page.',
+    icon: 'image',
+    component: lazy(() => import('./tools/image-to-pdf/ImageToPdf')),
+  },
 ]

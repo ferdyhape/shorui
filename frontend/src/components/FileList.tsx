@@ -1,11 +1,13 @@
-import { Icon } from '../../components/core/Icon'
+import { Icon, type IconName } from './core/Icon'
 
 interface Props {
   files: File[]
   onRemove: (index: number) => void
+  icon?: IconName
 }
 
-export function FileList({ files, onRemove }: Props) {
+/** A list of already-added files with a per-file remove button. Shared by any multi-file tool. */
+export function FileList({ files, onRemove, icon = 'file-text' }: Props) {
   if (files.length === 0) return null
   return (
     <ul className="m-0 mt-3 flex list-none flex-col gap-1 p-0">
@@ -14,7 +16,7 @@ export function FileList({ files, onRemove }: Props) {
           key={`${file.name}-${i}`}
           className="flex items-center gap-2 rounded-md border border-border bg-surface-card px-2.5 py-1.5 text-body-sm text-ink"
         >
-          <Icon name="file-text" size={15} className="shrink-0 text-ink-faint" />
+          <Icon name={icon} size={15} className="shrink-0 text-ink-faint" />
           <span className="min-w-0 flex-1 truncate">{file.name}</span>
           <button
             type="button"

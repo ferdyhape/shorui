@@ -60,10 +60,14 @@ innerWidth`), nothing clipped, all actions reachable.
 - One folder per tool in `src/tools/<name>/`: container component (`<Name>.tsx`), a `use<Name>` hook that
   owns async work, status (busy/error/notice) and an `AbortController`; a **pure reducer** (`reducer.ts`)
   for domain state; small step components; pure helpers in `rows.ts`-style modules with unit tests.
-- Shared UI in `src/components/`. Reuse `Button`, `Card`, `Input`, `Select`, `Banner`,
-  `FileDropzone`/`MultiFileDropzone`; style an anchor as a button with `buttonClasses()` from
+- Shared UI in `src/components/`. Reuse `Button`, `Card`, `Input`, `Select`, `Checkbox`, `Banner`,
+  `FileDropzone`/`MultiFileDropzone`, `FileList` (a removable list of already-added files, shared by
+  every multi-file tool); style an anchor as a button with `buttonClasses()` from
   `core/buttonStyles.ts` (kept out of `Button.tsx` so fast refresh works). Add new primitives by
   porting the Kagami component's API, typed.
+- `Checkbox` wires its `hint` as `aria-describedby`, not inside the `<label>` - keeps the accessible
+  name just the label text (`getByLabelText('Document properties')` would otherwise need the hint
+  text too). Follow that pattern for any new control that has both a label and a hint.
 - `components/ToolIntro.tsx` is the generic dismissible "what does this tool do" panel (title +
   prose children, remembered per browser via `lib/useStoredFlag`, leaves a reopen button) - every
   tool other than Text Replacer uses this one. Text Replacer keeps its own bespoke version (in its

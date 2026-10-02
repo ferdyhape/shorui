@@ -6,7 +6,7 @@ import { Card } from '../../components/core/Card'
 import { Icon } from '../../components/core/Icon'
 import { MultiFileDropzone } from '../../components/MultiFileDropzone'
 import { ToolIntro } from '../../components/ToolIntro'
-import { FileList } from './FileList'
+import { FileList } from '../../components/FileList'
 import { PairsTable } from './PairsTable'
 import { useBulkReplace } from './useBulkReplace'
 

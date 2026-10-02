@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     max_pdf_pages: int = Field(1000, ge=1)  # across all input files combined
     soffice_path: str | None = None  # None = auto-detect (see docx_to_pdf.converter)
     conversion_timeout_seconds: int = Field(60, ge=1)
+    max_stamp_text_chars: int = Field(200, ge=1)
+    max_image_mb: int = Field(15, ge=1)  # per image, for image-to-pdf
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
     log_level: str = "INFO"
 

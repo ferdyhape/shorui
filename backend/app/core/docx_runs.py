@@ -42,8 +42,12 @@ def load_docx(data: bytes) -> Any:
         raise InvalidFileError("File is not a valid .docx document") from exc
 
 
-def _roots(doc: Any) -> Iterator[Any]:
-    """Body plus every distinct header/footer part."""
+def roots(doc: Any) -> Iterator[Any]:
+    """Body plus every distinct header/footer part (the XML roots `paragraphs()` walks).
+
+    Exposed for tools that edit document structure rather than paragraph text (docx_cleaner's
+    tracked-changes/comment-anchor removal) - they need the raw XML trees, not matched text.
+    """
     yield doc.element.body
     seen: set[int] = set()
     for section in doc.sections:
@@ -67,7 +71,7 @@ def _roots(doc: Any) -> Iterator[Any]:
 
 def paragraphs(doc: Any) -> Iterator[Any]:
     # Iterating w:p covers body, nested tables and text boxes.
-    for root in _roots(doc):
+    for root in roots(doc):
         yield from root.iter(_W_P)
 
 
