@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -38,7 +39,10 @@ def create_app() -> FastAPI:
     v1 = APIRouter(prefix="/api/v1")
     v1.include_router(text_replacer_router)
     v1.include_router(pdf_tools_router)
-    v1.include_router(docx_to_pdf_router)
+    if os.environ.get("SHORUI_DESKTOP") != "1":
+        # Needs LibreOffice installed (~300-500MB) - excluded from the desktop build, which has
+        # no such dependency available. See frontend/src/tools.ts's matching `desktop: false`.
+        v1.include_router(docx_to_pdf_router)
     v1.include_router(bulk_replace_router)
     v1.include_router(docx_cleaner_router)
     v1.include_router(pdf_compress_router)

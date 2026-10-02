@@ -9,6 +9,8 @@ export interface Tool {
   description: string
   icon: IconName
   category: ToolCategory // groups the sidebar: "Word Documents" vs "PDF"
+  /** Set to `false` to exclude a tool from the desktop build (see `visibleTools`). Omitted = true. */
+  desktop?: boolean
   component: LazyExoticComponent<ComponentType>
 }
 
@@ -44,6 +46,9 @@ export const tools: Tool[] = [
     description: 'Convert a Word document to a PDF, laid out exactly like Word would print it.',
     icon: 'file-output',
     category: 'docx',
+    // Needs LibreOffice installed (~300-500MB) - not worth bundling into the desktop installer
+    // for one tool. Reversible: flip this back to omitted/true if that changes.
+    desktop: false,
     component: lazy(() => import('./tools/docx-to-pdf/DocxToPdf')),
   },
   {
@@ -79,3 +84,16 @@ export const tools: Tool[] = [
     component: lazy(() => import('./tools/image-to-pdf/ImageToPdf')),
   },
 ]
+
+/** Pure so it's testable without faking `import.meta.env`; `visibleTools` below is the real call. */
+export function computeVisibleTools(allTools: Tool[], isDesktopBuild: boolean): Tool[] {
+  return isDesktopBuild ? allTools.filter((t) => t.desktop !== false) : allTools
+}
+
+// `desktop/scripts/sync.sh` builds the frontend with VITE_TARGET=desktop; the web build (dev or
+// `npm run build`) never sets it, so this is a no-op there - `tools` and `visibleTools` are the
+// same array for web.
+export const visibleTools: Tool[] = computeVisibleTools(
+  tools,
+  import.meta.env.VITE_TARGET === 'desktop',
+)

@@ -13,6 +13,16 @@ backend; the frontend only collects input and shows results. Tools so far:
 - **PDF Stamp** - add a watermark and/or page numbers to every page of a PDF.
 - **Image to PDF** - combine one or more images into a single PDF.
 
+There are two distributions of the same app: the **web** app (`backend/` + `frontend/`, this file)
+and an installable **desktop** app (`desktop/`, see [desktop/README.md](desktop/README.md)). Develop
+and add tools in `backend/`/`frontend/` only, exactly as described below; `desktop/` packages
+whatever is currently there on demand (`npm run sync`/`npm run build` inside `desktop/`) and is
+never where source code lives. The only desktop-specific thing to know while working in
+`backend/`/`frontend/`: a tool can opt out of the desktop build with `desktop: false` in
+`frontend/src/tools.ts` (currently only Docx to PDF, which needs LibreOffice installed separately)
+
+- see "Add a tool" below.
+
 Read this file first. Deeper rules live in [backend/CLAUDE.md](backend/CLAUDE.md) and
 [frontend/CLAUDE.md](frontend/CLAUDE.md). You should not need to explore the code to start working.
 
@@ -84,8 +94,13 @@ frontend/src/
    `core/errors.py`, never `HTTPException` in services. Add tests in `backend/tests/`.
 2. Frontend: `frontend/src/tools/<name>/` (container, `use<Name>` hook + pure reducer, step
    components), `frontend/src/api/<name>.ts`, then add an entry (id, name, description, icon,
-   lazy component) to `frontend/src/tools.ts`. If the icon is new, add it to `components/core/Icon.tsx`.
-3. Update the README "Layout"/tool notes if structure changed; keep this file accurate.
+   category, lazy component) to `frontend/src/tools.ts`. If the icon is new, add it to
+   `components/core/Icon.tsx`. Needs an external program (like LibreOffice) the desktop build can't
+   bundle? Set `desktop: false` on that entry and add the matching `if os.environ.get("SHORUI_DESKTOP")`
+   guard in `backend/app/main.py` around its router - see `docx_to_pdf` for the exact pattern.
+3. If the tool has a downloadable sample, add its samples dir to `SAMPLE_DIRS` in
+   `desktop/scripts/sync.sh` too, or that sample 500s in the desktop build (web is unaffected).
+4. Update the README "Layout"/tool notes if structure changed; keep this file accurate.
 
 ## Shared core modules (use these, don't duplicate)
 
@@ -264,3 +279,9 @@ string')` won't match it. Build the full string in one template literal before r
 - pypdf has no "image to PDF page" API; a JPEG's own bytes are a valid `/DCTDecode` image stream
   as-is (no re-encoding of pixel data) - see `core/pdf_images.py` before reaching for a heavier
   dependency to do this.
+- Desktop build (`desktop/`): Rust's GNU target on Windows needs a _full_ standalone MinGW-w64
+  (`dlltool` etc.) - `rustup`'s own `rust-mingw` component alone is not enough and fails with
+  `dlltool could not create import library`/`CreateProcess` errors. See `desktop/README.md`'s
+  one-time setup. `PyInstaller --add-data` resolves a relative `SRC` against its own workdir, not
+  the caller's cwd - always pass it an absolute Windows-style path (`pwd -W` in Git Bash, not
+  `cygpath -m` on an already-relative path, which is a no-op).

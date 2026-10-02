@@ -18,6 +18,12 @@ many docx files), **Docx Cleaner** (strip properties/comments/tracked changes), 
 
 Installs dependencies on first run, then starts the backend (`:8000`, API docs at `/docs`) and the
 frontend (Vite, `:5173`, proxies `/api` to the backend). Ctrl+C stops both.
+
+There's also an installable **desktop** build (Tauri + a bundled backend, no internet, no server to
+reach by hand) in [`desktop/`](desktop/README.md). It packages whatever is currently in `backend/`/
+`frontend/` on demand - develop and add tools here as usual, then `cd desktop && npm run sync` (or
+`npm run build` for a full installer) to bring the current state in. One tool (Docx to PDF) is
+excluded from it for now, since it needs LibreOffice installed separately.
 Override ports with `BACKEND_PORT` / `FRONTEND_PORT`.
 
 ## Checks

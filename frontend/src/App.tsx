@@ -15,17 +15,17 @@ import { Sidebar, type SidebarSection } from './components/navigation/Sidebar'
 import { ThemeToggle } from './components/navigation/ThemeToggle'
 import { minWidthQuery } from './lib/breakpoints'
 import { useMediaQuery } from './lib/useMediaQuery'
-import { tools, type Tool } from './tools'
+import { visibleTools, type Tool } from './tools'
 
 const CATEGORY_LABELS: Record<Tool['category'], string> = {
   docx: 'Word Documents',
   pdf: 'PDF',
 }
 
-// One sidebar section per category, in each category's first-seen order in `tools`.
+// One sidebar section per category, in each category's first-seen order in `visibleTools`.
 const SECTIONS: SidebarSection[] = Object.entries(CATEGORY_LABELS).map(([category, label]) => ({
   label,
-  items: tools
+  items: visibleTools
     .filter((t) => t.category === category)
     .map(({ id, name, icon }) => ({ id, label: name, icon })),
 }))
@@ -50,7 +50,7 @@ function Shell() {
   const drawerVisible = drawerOpen && !isDesktop
 
   useEffect(() => {
-    const tool = tools.find((t) => t.id === activeId)
+    const tool = visibleTools.find((t) => t.id === activeId)
     document.title = tool ? `${tool.name} · Shorui` : 'Shorui'
   }, [activeId])
 
@@ -134,13 +134,13 @@ function ToolPage({ tool }: { tool: Tool }) {
 }
 
 export default function App() {
-  const home = tools[0] ? `/${tools[0].id}` : '/'
+  const home = visibleTools[0] ? `/${visibleTools[0].id}` : '/'
   return (
     <HashRouter>
       <Routes>
         <Route element={<Shell />}>
           <Route index element={<Navigate to={home} replace />} />
-          {tools.map((tool) => (
+          {visibleTools.map((tool) => (
             <Route key={tool.id} path={tool.id} element={<ToolPage tool={tool} />} />
           ))}
           <Route path="*" element={<Navigate to={home} replace />} />
