@@ -44,4 +44,14 @@ describe('App shell (responsive)', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: 'Hide sidebar' })).toBeInTheDocument()
   })
+
+  it('groups the sidebar into Word Documents and PDF sections', () => {
+    render(<App />)
+    expect(screen.getByText('Word Documents')).toBeInTheDocument()
+    expect(screen.getByText('PDF')).toBeInTheDocument()
+    // Docx to PDF is grouped with the Word-document tools (it starts from a .docx).
+    const wordSection = screen.getByText('Word Documents').parentElement!
+    expect(wordSection).toHaveTextContent('Docx to PDF')
+    expect(wordSection).not.toHaveTextContent('PDF Compress')
+  })
 })

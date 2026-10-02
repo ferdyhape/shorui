@@ -17,12 +17,18 @@ import { minWidthQuery } from './lib/breakpoints'
 import { useMediaQuery } from './lib/useMediaQuery'
 import { tools, type Tool } from './tools'
 
-const SECTIONS: SidebarSection[] = [
-  {
-    label: 'Tools',
-    items: tools.map(({ id, name, icon }) => ({ id, label: name, icon })),
-  },
-]
+const CATEGORY_LABELS: Record<Tool['category'], string> = {
+  docx: 'Word Documents',
+  pdf: 'PDF',
+}
+
+// One sidebar section per category, in each category's first-seen order in `tools`.
+const SECTIONS: SidebarSection[] = Object.entries(CATEGORY_LABELS).map(([category, label]) => ({
+  label,
+  items: tools
+    .filter((t) => t.category === category)
+    .map(({ id, name, icon }) => ({ id, label: name, icon })),
+}))
 
 const SIDEBAR_COLLAPSED_KEY = 'shorui:sidebarCollapsed'
 
